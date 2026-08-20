@@ -47,12 +47,22 @@ const SAVED_STAFF_KEY = "commuj_staff_name";
 
 window.addEventListener("DOMContentLoaded", function() {
 
-  const staffSelect = document.getElementById("staffName");
+  const staffSelect =
+    document.getElementById("staffName");
 
-  const savedStaff = localStorage.getItem(SAVED_STAFF_KEY);
+  const savedStaff =
+    localStorage.getItem(SAVED_STAFF_KEY);
 
   if (savedStaff) {
+
     staffSelect.value = savedStaff;
+
+    // Give the staff list time to load,
+    // then start the camera automatically.
+    setTimeout(function() {
+      startScanner();
+    }, 1500);
+
   }
 
   staffSelect.addEventListener("change", function() {
