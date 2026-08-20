@@ -43,6 +43,39 @@ button.secondary{background:#666}.or{text-align:center;color:#777;margin:8px 0 1
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZuHURuq1VAoEe9TeaP2kWXdV4j7nASFpDh5yRbtw3938VZSNL383rWs_9xE0cHCKjvg/exec";
 let scanner=null, running=false;
 
+const SAVED_STAFF_KEY = "commuj_staff_name";
+
+window.addEventListener("DOMContentLoaded", function() {
+
+  const staffSelect = document.getElementById("staffName");
+
+  const savedStaff = localStorage.getItem(SAVED_STAFF_KEY);
+
+  if (savedStaff) {
+    staffSelect.value = savedStaff;
+  }
+
+  staffSelect.addEventListener("change", function() {
+
+    if (this.value) {
+
+      localStorage.setItem(
+        SAVED_STAFF_KEY,
+        this.value
+      );
+
+    } else {
+
+      localStorage.removeItem(
+        SAVED_STAFF_KEY
+      );
+
+    }
+
+  });
+
+});
+ 
 function showResult(type,title,message){
  document.getElementById("result").innerHTML='<div class="result-box '+type+'"><div class="title">'+title+'</div><div>'+message+'</div></div>';
 }
