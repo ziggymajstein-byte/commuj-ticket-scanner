@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COMMUJ Dinner & Awards — Ticket Check-In</title>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
+.container{max-width:520px;margin:0 auto}.header{text-align:center;margin-bottom:20px}.header h1{margin:0;font-size:25px}.header p{margin:7px 0;color:#666}
+.card{background:#fff;padding:22px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+label{display:block;font-weight:700;margin:0 0 7px}select,input{width:100%;padding:13px;font-size:16px;border:1px solid #ccc;border-radius:8px;margin-bottom:14px;background:#fff}
+button{width:100%;padding:14px;border:0;border-radius:8px;background:#1a73e8;color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px}
+button.secondary{background:#666}.or{text-align:center;color:#777;margin:8px 0 14px}#reader{width:100%;margin:12px 0}
+.result-box{padding:16px;border-radius:10px;margin-top:12px}.valid{background:#e6f4ea;border:1px solid #34a853}.warning{background:#fef7e0;border:1px solid #fbbc04}.invalid{background:#fce8e6;border:1px solid #ea4335}
+.title{font-size:20px;font-weight:700;margin-bottom:10px}.token{word-break:break-all;font-family:monospace}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header"><h1>COMMUJ Dinner & Awards</h1><p>2026 Ticket Check-In</p></div>
+<div class="card">
+<label for="staffName">Staff</label>
+<select id="staffName">
+<option value="">Select staff member</option>
+<option>Majstein Amin</option>
+<option>Ziggy Maj</option>
+<option>Chernor Maju</option>
+</select>
+
+<button type="button" id="startBtn" onclick="startScanner()">📷 SCAN QR CODE</button>
+<div id="reader" style="display:none"></div>
+<button type="button" id="stopBtn" class="secondary" style="display:none" onclick="stopScanner()">STOP CAMERA</button>
+
+<div class="or">— OR ENTER TOKEN MANUALLY —</div>
+<label for="token">QR Token</label>
+<input id="token" type="text" placeholder="Enter QR token" autocomplete="off">
+<button id="checkBtn" type="button" onclick="sendToCheckIn()">CHECK & CHECK-IN</button>
+<div id="result"></div>
+</div></div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZuHURuq1VAoEe9TeaP2kWXdV4j7nASFpDh5yRbtw3938VZSNL383rWs_9xE0cHCKjvg/exec";
+let scanner=null, running=false;
+
+function showResult(type,title,message){
+ document.getElementById("result").innerHTML='<div class="result-box '+type+'"><div class="title">'+title+'</div><div>'+message+'</div></div>';
+}
+
+function startScanner(){
+ const staff=document.getElementById("staffName").value;
+ if(!staff){showResult("warning","⚠️ SELECT STAFF","Choose the staff member before scanning.");return;}
+ document.getElementById("result").innerHTML="";
+ document.getElementById("reader").style.display="block";
+ document.getElementById("startBtn").style.display="none";
+ document.getElementById("stopBtn").style.display="block";
+ scanner=new Html5Qrcode("reader");
+ scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},function(decodedText){
+   document.getElementById("token").value=decodedText;
+   stopScanner();
+   showResult("valid","✅ QR CODE SCANNED",'Token detected: <span class="token">'+escapeHtml(decodedText)+'</span><br><br>Review it, then press <strong>CHECK & CHECK-IN</strong>.');
+ },function(){}).then(function(){running=true;}).catch(function(error){
+   document.getElementById("reader").style.display="none";
+   document.getElementById("startBtn").style.display="block";
+   document.getElementById("stopBtn").style.display="none";
+   showResult("invalid","❌ CAMERA ERROR","The camera could not be started. Make sure camera permission is allowed.");
+   console.error(error);
+ });
+}
+
+function stopScanner(){
+ if(scanner&&running){
+   scanner.stop().then(function(){
+     running=false;
+     document.getElementById("reader").style.display="none";
+     document.getElementById("startBtn").style.display="block";
+     document.getElementById("stopBtn").style.display="none";
+   }).catch(function(error){console.error(error);});
+ }else{
+   document.getElementById("reader").style.display="none";
+   document.getElementById("startBtn").style.display="block";
+   document.getElementById("stopBtn").style.display="none";
+ }
+}
+
+function sendToCheckIn(){
+ const staff=document.getElementById("staffName").value.trim();
+ const token=document.getElementById("token").value.trim();
+ if(!staff){showResult("warning","⚠️ SELECT STAFF","Choose the staff member first.");return;}
+ if(!token){showResult("warning","⚠️ NO QR TOKEN","Scan a QR code or enter a token manually.");return;}
+ if(APPS_SCRIPT_URL.indexOf("PASTE_YOUR")===0){showResult("invalid","⚠️ SETUP REQUIRED","The Apps Script Web App URL has not been added to the scanner yet.");return;}
+ window.location.href=APPS_SCRIPT_URL+"?action=checkin&token="+encodeURIComponent(token)+"&staff="+encodeURIComponent(staff);
+}
+
+function escapeHtml(value){
+ return String(value).replace(/[&<>"']/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch];});
+}
+</script>
+</body>
+</html>
