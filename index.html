@@ -23,10 +23,7 @@ button.secondary{background:#666}.or{text-align:center;color:#777;margin:8px 0 1
 <div class="card">
 <label for="staffName">Staff</label>
 <select id="staffName">
-<option value="">Select staff member</option>
-<option>Majstein Amin</option>
-<option>Ziggy Maj</option>
-<option>Chernor Maju</option>
+  <option value="">Loading staff...</option>
 </select>
 
 <button type="button" id="startBtn" onclick="startScanner()">📷 SCAN QR CODE</button>
@@ -46,8 +43,66 @@ let scanner=null, running=false;
 
 const SAVED_STAFF_KEY = "commuj_staff_name";
 
-window.addEventListener("DOMContentLoaded", function() {
+function loadCheckInStaff() {
 
+  const staffSelect =
+    document.getElementById("staffName");
+
+  const callbackName =
+    "commujCheckInStaffCallback";
+
+  window[callbackName] =
+    function(staffList) {
+
+      staffSelect.innerHTML =
+        '<option value="">Select staff member</option>';
+
+      if (!staffList || staffList.length === 0) {
+
+        staffSelect.innerHTML =
+          '<option value="">No active staff found</option>';
+
+        return;
+      }
+
+      staffList.forEach(function(name) {
+
+        const option =
+          document.createElement("option");
+
+        option.value = name;
+        option.textContent = name;
+
+        staffSelect.appendChild(option);
+
+      });
+
+      delete window[callbackName];
+    };
+
+  const script =
+    document.createElement("script");
+
+  script.src =
+    APPS_SCRIPT_URL +
+    "?action=getCheckInStaff" +
+    "&callback=" +
+    callbackName +
+    "&t=" +
+    Date.now();
+
+  script.onerror = function() {
+
+    staffSelect.innerHTML =
+      '<option value="">Unable to load staff</option>';
+
+  };
+
+  document.body.appendChild(script);
+}
+  
+window.addEventListener("DOMContentLoaded", function() {
+loadCheckInStaff();
   const staffSelect =
     document.getElementById("staffName");
 
