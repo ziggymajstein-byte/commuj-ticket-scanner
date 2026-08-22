@@ -94,17 +94,29 @@ function loadCheckInStaff() {
 
       staffList.forEach(function(name) {
 
-        const option =
-          document.createElement("option");
+  const option =
+    document.createElement("option");
 
-        option.value = name;
-        option.textContent = name;
+  option.value = name;
+  option.textContent = name;
 
-        staffSelect.appendChild(option);
+  staffSelect.appendChild(option);
 
-      });
+});
 
-      delete window[callbackName];
+
+const savedStaff =
+  localStorage.getItem(SAVED_STAFF_KEY);
+
+if (
+  savedStaff &&
+  staffList.indexOf(savedStaff) !== -1
+) {
+  staffSelect.value = savedStaff;
+}
+
+
+delete window[callbackName];
     };
 
   const script =
@@ -133,20 +145,7 @@ loadCheckInStaff();
   const staffSelect =
     document.getElementById("staffName");
 
-  const savedStaff =
-    localStorage.getItem(SAVED_STAFF_KEY);
 
-  if (savedStaff) {
-
-    staffSelect.value = savedStaff;
-
-    // Give the staff list time to load,
-    // then start the camera automatically.
-    setTimeout(function() {
-      startScanner();
-    }, 1500);
-
-  }
 
   staffSelect.addEventListener("change", function() {
 
