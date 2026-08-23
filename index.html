@@ -455,6 +455,164 @@ function searchLostTicket() {
     '</div>';
 
 }
+
+function confirmLostTicketCheckIn() {
+
+  const holderName =
+    document.getElementById("lostName").value.trim();
+
+  const phone =
+    document.getElementById("lostPhone").value.trim();
+
+  const staff =
+    document.getElementById("staffName").value.trim();
+
+
+  if (!staff) {
+
+    showResult(
+      "warning",
+      "⚠️ SELECT STAFF",
+      "Choose the staff member first."
+    );
+
+    return;
+  }
+
+
+  if (!holderName || !phone) {
+
+    showResult(
+      "warning",
+      "⚠️ INFORMATION MISSING",
+      "The holder name and phone number are required."
+    );
+
+    return;
+  }
+
+
+  showResult(
+    "warning",
+    "⏳ CHECKING IN...",
+    "Re-checking the ticket before recording entry."
+  );
+
+
+  const callbackName =
+    "commujLostTicketCheckInCallback_" +
+    Date.now();
+
+
+  window[callbackName] =
+    function(response) {
+
+      try {
+
+        if (!response || !response.success) {
+
+          showResult(
+            "invalid",
+            "❌ CHECK-IN FAILED",
+            escapeHtml(
+              response &&
+              response.message
+                ? response.message
+                : "The lost ticket could not be checked in."
+            )
+          );
+
+          return;
+        }
+
+
+        const ticket =
+          response.ticket;
+
+
+        if (!ticket) {
+
+          showResult(
+            "invalid",
+            "❌ CHECK-IN FAILED",
+            "No ticket information was returned."
+          );
+
+          return;
+        }
+
+
+        showResult(
+          "valid",
+          "✅ LOST TICKET CHECKED IN",
+          '<strong>Ticket:</strong> ' +
+          escapeHtml(ticket.ticketId) +
+          '<br><strong>Holder:</strong> ' +
+          escapeHtml(ticket.holderName) +
+          '<br><strong>Category:</strong> ' +
+          escapeHtml(ticket.category) +
+          '<br><strong>Payment:</strong> ' +
+          escapeHtml(ticket.paymentStatus) +
+          '<br><strong>Status:</strong> USED' +
+          '<br><strong>Entry Staff:</strong> ' +
+          escapeHtml(ticket.entryStaff)
+        );
+
+
+        /*
+         * Clear the lost-ticket fields after
+         * successful check-in.
+         */
+
+        document.getElementById("lostName").value = "";
+        document.getElementById("lostPhone").value = "";
+
+
+      } finally {
+
+        delete window[callbackName];
+
+      }
+
+    };
+
+
+  const script =
+    document.createElement("script");
+
+
+  script.src =
+    APPS_SCRIPT_URL +
+    "?action=lostTicketCheckin" +
+    "&holderName=" +
+    encodeURIComponent(holderName) +
+    "&phone=" +
+    encodeURIComponent(phone) +
+    "&staff=" +
+    encodeURIComponent(staff) +
+    "&callback=" +
+    encodeURIComponent(callbackName) +
+    "&t=" +
+    Date.now();
+
+
+  script.onerror =
+    function() {
+
+      delete window[callbackName];
+
+      showResult(
+        "invalid",
+        "❌ CHECK-IN ERROR",
+        "Unable to connect to the ticket database."
+      );
+
+    };
+
+
+  document.body.appendChild(script);
+
+}
   
 function escapeHtml(value){
  return String(value).replace(/[&<>"']/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch];});
