@@ -61,6 +61,31 @@ button.secondary{background:#666}.or{text-align:center;color:#777;margin:8px 0 1
 <label for="token">QR Token</label>
 <input id="token" type="text" placeholder="Enter QR token" autocomplete="off">
 <button id="checkBtn" type="button" onclick="sendToCheckIn()">CHECK & CHECK-IN</button>
+  <div class="or">— LOST TICKET / NO QR CODE —</div>
+
+<label for="lostName">Ticket Holder Name</label>
+<input
+  id="lostName"
+  type="text"
+  placeholder="Enter ticket holder's name"
+  autocomplete="off"
+>
+
+<label for="lostPhone">Phone Number</label>
+<input
+  id="lostPhone"
+  type="text"
+  placeholder="Enter ticket holder's phone number"
+  autocomplete="off"
+>
+
+<button
+  type="button"
+  id="findLostTicketButton"
+  onclick="searchLostTicket()"
+>
+  🔎 FIND LOST TICKET
+</button>
 <div id="result"></div>
 </div></div>
 
@@ -217,6 +242,145 @@ function sendToCheckIn(){
  window.location.href=APPS_SCRIPT_URL+"?action=checkin&token="+encodeURIComponent(token)+"&staff="+encodeURIComponent(staff);
 }
 
+function searchLostTicket() {
+
+  const holderName =
+    document.getElementById("lostName").value.trim();
+
+  const phone =
+    document.getElementById("lostPhone").value.trim();
+
+  const staff =
+    document.getElementById("staffName").value.trim();
+
+  if (!staff) {
+
+    showResult(
+      "warning",
+      "⚠️ SELECT STAFF",
+      "Choose the staff member first."
+    );
+
+    return;
+  }
+
+  if (!holderName) {
+
+    showResult(
+      "warning",
+      "⚠️ HOLDER NAME REQUIRED",
+      "Enter the ticket holder's name."
+    );
+
+    return;
+  }
+
+  if (!phone) {
+
+    showResult(
+      "warning",
+      "⚠️ PHONE NUMBER REQUIRED",
+      "Enter the phone number used when the ticket was sold."
+    );
+
+    return;
+  }
+
+
+  showResult(
+    "warning",
+    "🔎 SEARCHING...",
+    "Checking the ticket database."
+  );
+
+
+  const callbackName =
+    "commujLostTicketCallback_" +
+    Date.now();
+
+
+  window[callbackName] =
+    function(response) {
+
+      try {
+
+        if (!response || !response.success) {
+
+          showResult(
+            "invalid",
+            "❌ TICKET NOT FOUND",
+            escapeHtml(
+              response &&
+              response.message
+                ? response.message
+                : "No matching ticket was found."
+            )
+          );
+
+          return;
+        }
+
+
+        if (!response.ticket) {
+
+          showResult(
+            "invalid",
+            "❌ TICKET NOT FOUND",
+            "No ticket information was returned."
+          );
+
+          return;
+        }
+
+
+        showLostTicketConfirmation(
+          response.ticket
+        );
+
+      } finally {
+
+        delete window[callbackName];
+
+      }
+
+    };
+
+
+  const script =
+    document.createElement("script");
+
+
+  script.src =
+    APPS_SCRIPT_URL +
+    "?action=lostTicketSearch" +
+    "&holderName=" +
+    encodeURIComponent(holderName) +
+    "&phone=" +
+    encodeURIComponent(phone) +
+    "&callback=" +
+    encodeURIComponent(callbackName) +
+    "&t=" +
+    Date.now();
+
+
+  script.onerror =
+    function() {
+
+      delete window[callbackName];
+
+      showResult(
+        "invalid",
+        "❌ SEARCH ERROR",
+        "Unable to connect to the ticket database."
+      );
+
+    };
+
+
+  document.body.appendChild(script);
+
+}
+  
 function escapeHtml(value){
  return String(value).replace(/[&<>"']/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch];});
 }
