@@ -380,6 +380,81 @@ function searchLostTicket() {
   document.body.appendChild(script);
 
 }
+
+  function showLostTicketConfirmation(ticket) {
+
+  const result =
+    document.getElementById("result");
+
+  const staff =
+    document.getElementById("staffName").value.trim();
+
+
+  result.innerHTML =
+
+    '<div class="result-box warning">' +
+
+      '<div class="title">' +
+        '🎫 LOST TICKET FOUND' +
+      '</div>' +
+
+      '<div style="line-height:1.7;">' +
+
+        '<strong>Ticket:</strong> ' +
+        escapeHtml(ticket.ticketId) +
+        '<br>' +
+
+        '<strong>Category:</strong> ' +
+        escapeHtml(ticket.category) +
+        '<br>' +
+
+        '<strong>Holder:</strong> ' +
+        escapeHtml(ticket.holderName) +
+        '<br>' +
+
+        '<strong>Phone:</strong> ' +
+        escapeHtml(ticket.phone) +
+        '<br>' +
+
+        '<strong>Amount:</strong> NLe ' +
+        escapeHtml(String(ticket.amount)) +
+        '<br>' +
+
+        '<strong>Payment:</strong> ' +
+        escapeHtml(ticket.paymentStatus) +
+        '<br>' +
+
+        '<strong>Status:</strong> ' +
+        escapeHtml(ticket.ticketStatus) +
+
+      '</div>' +
+
+      '<div style="' +
+        'margin-top:15px;' +
+        'padding:12px;' +
+        'background:#fef7e0;' +
+        'border:1px solid #fbbc04;' +
+        'border-radius:8px;' +
+      '">' +
+
+        '⚠️ <strong>QR CODE NOT PRESENT</strong><br>' +
+        'Verify the information above before confirming entry.' +
+
+      '</div>' +
+
+      '<button ' +
+        'type="button" ' +
+        'id="confirmLostTicketButton" ' +
+        'onclick="confirmLostTicketCheckIn()"' +
+      '>' +
+
+        '✅ CONFIRM LOST-TICKET CHECK-IN' +
+
+      '</button>' +
+
+    '</div>';
+
+}
   
 function escapeHtml(value){
  return String(value).replace(/[&<>"']/g,function(ch){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch];});
