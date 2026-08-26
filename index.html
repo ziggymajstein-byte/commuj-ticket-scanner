@@ -233,13 +233,79 @@ function stopScanner(){
  }
 }
 
-function sendToCheckIn(){
- const staff=document.getElementById("staffName").value.trim();
- const token=document.getElementById("token").value.trim();
- if(!staff){showResult("warning","⚠️ SELECT STAFF","Choose the staff member first.");return;}
- if(!token){showResult("warning","⚠️ NO QR TOKEN","Scan a QR code or enter a token manually.");return;}
- if(APPS_SCRIPT_URL.indexOf("PASTE_YOUR")===0){showResult("invalid","⚠️ SETUP REQUIRED","The Apps Script Web App URL has not been added to the scanner yet.");return;}
- window.location.href=APPS_SCRIPT_URL+"?action=checkin&token="+encodeURIComponent(token)+"&staff="+encodeURIComponent(staff);
+function sendToCheckIn() {
+
+  const staff =
+    document.getElementById("staffName")
+      .value
+      .trim();
+
+  const token =
+    document.getElementById("token")
+      .value
+      .trim();
+
+
+  if (!staff) {
+
+    showResult(
+      "warning",
+      "⚠️ SELECT STAFF",
+      "Choose the staff member first."
+    );
+
+    return;
+
+  }
+
+
+  if (!token) {
+
+    showResult(
+      "warning",
+      "⚠️ NO QR TOKEN",
+      "Scan a QR code or enter a token manually."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    APPS_SCRIPT_URL.indexOf("PASTE_YOUR") === 0
+  ) {
+
+    showResult(
+      "invalid",
+      "⚠️ SETUP REQUIRED",
+      "The Apps Script Web App URL has not been added to the scanner yet."
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * Send the QR token and staff to Apps Script.
+   *
+   * Apps Script will first determine whether
+   * this is an Ordinary, Single Patron, or
+   * Double Patron ticket.
+   *
+   * Double Patron tickets will then request
+   * the arriving person's name and phone.
+   */
+
+  window.location.href =
+    APPS_SCRIPT_URL +
+    "?action=checkin" +
+    "&token=" +
+    encodeURIComponent(token) +
+    "&staff=" +
+    encodeURIComponent(staff);
+
 }
 
 function searchLostTicket() {
