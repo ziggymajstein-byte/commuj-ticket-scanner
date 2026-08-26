@@ -58,7 +58,7 @@ button.secondary{background:#666}.or{text-align:center;color:#777;margin:8px 0 1
 <button type="button" id="stopBtn" class="secondary" style="display:none" onclick="stopScanner()">STOP CAMERA</button>
 
 <div class="or">— OR ENTER TOKEN MANUALLY —</div>
-<lab<label for="token">QR Token</label>
+<label for="token">QR Token</label>
 <input id="token" type="text" placeholder="Enter QR token" autocomplete="off">
 
 <button id="checkBtn" type="button" onclick="sendToCheckIn()">CHECK & CHECK-IN</button>
@@ -317,6 +317,252 @@ function sendToCheckIn() {
 
 }
 
+function openPatron2CheckIn() {
+
+  const staff =
+    document
+      .getElementById("staffName")
+      .value
+      .trim();
+
+  if (!staff) {
+
+    showResult(
+      "warning",
+      "⚠️ SELECT STAFF",
+      "Choose the staff member first."
+    );
+
+    return;
+
+  }
+
+
+  document.getElementById("result").innerHTML = `
+
+    <div class="result-box warning">
+
+      <div class="title">
+        👥 PATRON 2 WITHOUT QR
+      </div>
+
+      <div style="margin-bottom:15px;">
+        Enter the details exactly as registered
+        for Patron 2 on the Double Patron ticket.
+      </div>
+
+      <label for="patron2ArrivalName">
+        Patron 2 Name
+      </label>
+
+      <input
+        id="patron2ArrivalName"
+        type="text"
+        placeholder="Enter Patron 2 name"
+        autocomplete="off"
+      >
+
+      <label for="patron2ArrivalPhone">
+        Patron 2 Phone Number
+      </label>
+
+      <input
+        id="patron2ArrivalPhone"
+        type="text"
+        placeholder="Enter Patron 2 phone number"
+        autocomplete="off"
+      >
+
+      <button
+        type="button"
+        onclick="submitPatron2WithoutQr()"
+      >
+        ✅ VERIFY & CHECK-IN
+      </button>
+
+      <button
+        type="button"
+        class="secondary"
+        onclick="clearPatron2CheckIn()"
+        style="margin-top:8px;"
+      >
+        CANCEL
+      </button>
+
+    </div>
+
+  `;
+
+  document
+    .getElementById("patron2ArrivalName")
+    .focus();
+
+}
+
+function submitPatron2WithoutQr() {
+
+  const staff =
+    document
+      .getElementById("staffName")
+      .value
+      .trim();
+
+  const arrivalName =
+    document
+      .getElementById("patron2ArrivalName")
+      .value
+      .trim();
+
+  const arrivalPhone =
+    document
+      .getElementById("patron2ArrivalPhone")
+      .value
+      .trim();
+
+
+  if (!staff) {
+
+    showResult(
+      "warning",
+      "⚠️ SELECT STAFF",
+      "Choose the staff member first."
+    );
+
+    return;
+
+  }
+
+
+  if (!arrivalName) {
+
+    showResult(
+      "warning",
+      "⚠️ NAME REQUIRED",
+      "Enter Patron 2's name."
+    );
+
+    return;
+
+  }
+
+
+  if (!arrivalPhone) {
+
+    showResult(
+      "warning",
+      "⚠️ PHONE REQUIRED",
+      "Enter Patron 2's phone number."
+    );
+
+    return;
+
+  }
+
+
+  showResult(
+    "warning",
+    "🔎 VERIFYING PATRON 2...",
+    "Checking the Double Patron ticket database."
+  );
+
+
+  const callbackName =
+    "commujDoublePatronCallback_" +
+    Date.now();
+
+
+  window[callbackName] =
+    function(response) {
+
+      try {
+
+        if (
+          response &&
+          response.success
+        ) {
+
+          showResult(
+            "valid",
+            "✅ ENTRY APPROVED",
+            "Patron 2 has been successfully checked in."
+          );
+
+          return;
+
+        }
+
+
+        showResult(
+          response &&
+          response.result === "ALREADY_USED"
+            ? "warning"
+            : "invalid",
+          response &&
+          response.result === "ALREADY_USED"
+            ? "⚠️ ALREADY USED"
+            : "❌ VERIFICATION FAILED",
+          escapeHtml(
+            response &&
+            response.message
+              ? response.message
+              : "Patron 2 could not be verified."
+          )
+        );
+
+      } finally {
+
+        delete window[callbackName];
+
+      }
+
+    };
+
+
+  const script =
+    document.createElement("script");
+
+
+  script.src =
+    APPS_SCRIPT_URL +
+    "?action=doublePatronWithoutQr" +
+    "&arrivalName=" +
+    encodeURIComponent(arrivalName) +
+    "&arrivalPhone=" +
+    encodeURIComponent(arrivalPhone) +
+    "&staff=" +
+    encodeURIComponent(staff) +
+    "&callback=" +
+    encodeURIComponent(callbackName) +
+    "&t=" +
+    Date.now();
+
+
+  script.onerror =
+    function() {
+
+      delete window[callbackName];
+
+      showResult(
+        "invalid",
+        "❌ CONNECTION ERROR",
+        "Unable to connect to the ticket database."
+      );
+
+    };
+
+
+  document
+    .body
+    .appendChild(script);
+
+}
+
+function clearPatron2CheckIn() {
+
+  document.getElementById("result").innerHTML = "";
+
+}  
+  
 function searchLostTicket() {
 
   const holderName =
