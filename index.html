@@ -58,10 +58,19 @@ button.secondary{background:#666}.or{text-align:center;color:#777;margin:8px 0 1
 <button type="button" id="stopBtn" class="secondary" style="display:none" onclick="stopScanner()">STOP CAMERA</button>
 
 <div class="or">— OR ENTER TOKEN MANUALLY —</div>
-<label for="token">QR Token</label>
+<lab<label for="token">QR Token</label>
 <input id="token" type="text" placeholder="Enter QR token" autocomplete="off">
+
 <button id="checkBtn" type="button" onclick="sendToCheckIn()">CHECK & CHECK-IN</button>
-  <div class="or">— LOST TICKET / NO QR CODE —</div>
+
+<button
+  type="button"
+  onclick="openPatron2CheckIn()"
+>
+  👥 PATRON 2 WITHOUT QR
+</button>
+
+<div class="or">OR — LOST TICKET / NO QR CODE</div>
 
 <label for="lostName">Ticket Holder Name</label>
 <input
