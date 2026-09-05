@@ -156,55 +156,132 @@ button.secondary{background:#666}.or{text-align:center;color:#777;margin:8px 0 1
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZuHURuq1VAoEe9TeaP2kWXdV4j7nASFpDh5yRbtw3938VZSNL383rWs_9xE0cHCKjvg/exec";
 let scanner=null, running=false;
 
-const SAVED_STAFF_KEY = "commuj_staff_name";
+const CHECKIN_SESSION_KEY = "commuj_checkin_session";
 
-function loadCheckInStaff() {
+function loginCheckInStaff() {
 
-  const staffSelect =
-    document.getElementById("staffName");
+  const staffId =
+    document.getElementById("staffId")
+      .value
+      .trim();
+
+  const pin =
+    document.getElementById("staffPin")
+      .value
+      .trim();
+
+  if (!staffId) {
+
+    showResult(
+      "warning",
+      "⚠️ STAFF ID REQUIRED",
+      "Enter your Staff ID."
+    );
+
+    return;
+  }
+
+  if (!/^\d{6}$/.test(pin)) {
+
+    showResult(
+      "warning",
+      "⚠️ INVALID PIN",
+      "PIN must be exactly 6 digits."
+    );
+
+    return;
+  }
+
+  const loginButton =
+    document.getElementById("loginButton");
+
+  loginButton.disabled = true;
+  loginButton.textContent = "🔐 LOGGING IN...";
+
+  showResult(
+    "warning",
+    "🔎 VERIFYING STAFF",
+    "Checking your Staff ID and PIN."
+  );
 
   const callbackName =
-    "commujCheckInStaffCallback";
+    "commujCheckInLoginCallback_" +
+    Date.now();
 
   window[callbackName] =
-    function(staffList) {
+    function(response) {
 
-      staffSelect.innerHTML =
-        '<option value="">Select staff member</option>';
+      try {
 
-      if (!staffList || staffList.length === 0) {
+        if (
+          !response ||
+          !response.success
+        ) {
 
-        staffSelect.innerHTML =
-          '<option value="">No active staff found</option>';
+          showResult(
+            "invalid",
+            "❌ LOGIN FAILED",
+            escapeHtml(
+              response &&
+              response.message
+                ? response.message
+                : "Staff ID or PIN is incorrect."
+            )
+          );
 
-        return;
+          return;
+        }
+
+        if (!response.token) {
+
+          showResult(
+            "invalid",
+            "❌ LOGIN FAILED",
+            "No secure session was returned."
+          );
+
+          return;
+        }
+
+        const session = {
+
+          token:
+            response.token,
+
+          staffId:
+            response.staffId ||
+            staffId,
+
+          staffName:
+            response.staffName ||
+            ""
+
+        };
+
+        sessionStorage.setItem(
+          CHECKIN_SESSION_KEY,
+          JSON.stringify(session)
+        );
+
+        showLoggedInStaff(session);
+
+        document.getElementById("staffPin").value = "";
+
+        showResult(
+          "valid",
+          "✅ LOGIN SUCCESSFUL",
+          "You are now authorized to check in tickets."
+        );
+
+      } finally {
+
+        delete window[callbackName];
+
+        loginButton.disabled = false;
+        loginButton.textContent = "🔐 LOGIN";
+
       }
 
-      staffList.forEach(function(name) {
-
-  const option =
-    document.createElement("option");
-
-  option.value = name;
-  option.textContent = name;
-
-  staffSelect.appendChild(option);
-
-});
-
-
-const savedStaff =
-  localStorage.getItem(SAVED_STAFF_KEY);
-
-if (
-  savedStaff &&
-  staffList.indexOf(savedStaff) !== -1
-) {
-  staffSelect.value = savedStaff;
-}
-
-
-delete window[callbackName];
     };
 
   const script =
@@ -212,49 +289,128 @@ delete window[callbackName];
 
   script.src =
     APPS_SCRIPT_URL +
-    "?action=getCheckInStaff" +
+    "?action=checkInLogin" +
+    "&staffId=" +
+    encodeURIComponent(staffId) +
+    "&pin=" +
+    encodeURIComponent(pin) +
     "&callback=" +
-    callbackName +
+    encodeURIComponent(callbackName) +
     "&t=" +
     Date.now();
 
-  script.onerror = function() {
+  script.onerror =
+    function() {
 
-    staffSelect.innerHTML =
-      '<option value="">Unable to load staff</option>';
+      delete window[callbackName];
 
-  };
+      loginButton.disabled = false;
+      loginButton.textContent = "🔐 LOGIN";
+
+      showResult(
+        "invalid",
+        "❌ CONNECTION ERROR",
+        "Unable to connect to the check-in system."
+      );
+
+    };
 
   document.body.appendChild(script);
+
 }
-  
-window.addEventListener("DOMContentLoaded", function() {
-loadCheckInStaff();
-  const staffSelect =
-    document.getElementById("staffName");
 
 
+function showLoggedInStaff(session) {
 
-  staffSelect.addEventListener("change", function() {
+  document.getElementById("loginSection")
+    .style.display = "none";
 
-    if (this.value) {
+  document.getElementById("loggedInSection")
+    .style.display = "block";
 
-      localStorage.setItem(
-        SAVED_STAFF_KEY,
-        this.value
-      );
+  document.getElementById("loggedInStaff")
+    .textContent =
+      session.staffId +
+      " — " +
+      session.staffName;
 
-    } else {
+}
 
-      localStorage.removeItem(
-        SAVED_STAFF_KEY
-      );
 
-    }
+function restoreCheckInSession() {
 
-  });
+  const stored =
+    sessionStorage.getItem(
+      CHECKIN_SESSION_KEY
+    );
 
-});
+  if (!stored) {
+    return;
+  }
+
+  let session;
+
+  try {
+
+    session =
+      JSON.parse(stored);
+
+  } catch (error) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    return;
+
+  }
+
+  if (
+    !session ||
+    !session.token
+  ) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    return;
+
+  }
+
+  showLoggedInStaff(session);
+
+}
+
+
+function logoutCheckInStaff() {
+
+  sessionStorage.removeItem(
+    CHECKIN_SESSION_KEY
+  );
+
+  document.getElementById("loginSection")
+    .style.display = "block";
+
+  document.getElementById("loggedInSection")
+    .style.display = "none";
+
+  document.getElementById("staffId").value = "";
+  document.getElementById("staffPin").value = "";
+
+  document.getElementById("result").innerHTML = "";
+
+}
+
+
+window.addEventListener(
+  "DOMContentLoaded",
+  function() {
+
+    restoreCheckInSession();
+
+  }
+);
  
 function showResult(type,title,message){
  document.getElementById("result").innerHTML='<div class="result-box '+type+'"><div class="title">'+title+'</div><div>'+message+'</div></div>';
@@ -298,29 +454,66 @@ function stopScanner(){
 
 function sendToCheckIn() {
 
-  const staff =
-    document.getElementById("staffName")
-      .value
-      .trim();
+  const sessionData =
+    sessionStorage.getItem(
+      CHECKIN_SESSION_KEY
+    );
+
+  if (!sessionData) {
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Please log in with your Staff ID and PIN before checking in tickets."
+    );
+
+    return;
+  }
+
+  let session;
+
+  try {
+
+    session =
+      JSON.parse(sessionData);
+
+  } catch (error) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
+
+  if (
+    !session ||
+    !session.token
+  ) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
 
   const token =
     document.getElementById("token")
       .value
       .trim();
-
-
-  if (!staff) {
-
-    showResult(
-      "warning",
-      "⚠️ SELECT STAFF",
-      "Choose the staff member first."
-    );
-
-    return;
-
-  }
-
 
   if (!token) {
 
@@ -331,9 +524,7 @@ function sendToCheckIn() {
     );
 
     return;
-
   }
-
 
   if (
     APPS_SCRIPT_URL.indexOf("PASTE_YOUR") === 0
@@ -346,19 +537,14 @@ function sendToCheckIn() {
     );
 
     return;
-
   }
 
-
   /*
-   * Send the QR token and staff to Apps Script.
+   * Send the QR token and secure session
+   * to Apps Script.
    *
-   * Apps Script will first determine whether
-   * this is an Ordinary, Single Patron, or
-   * Double Patron ticket.
-   *
-   * Double Patron tickets will then request
-   * the arriving person's name and phone.
+   * Staff identity is determined
+   * server-side from the session token.
    */
 
   window.location.href =
@@ -366,8 +552,8 @@ function sendToCheckIn() {
     "?action=checkin" +
     "&token=" +
     encodeURIComponent(token) +
-    "&staff=" +
-    encodeURIComponent(staff);
+    "&sessionToken=" +
+    encodeURIComponent(session.token);
 
 }
 
