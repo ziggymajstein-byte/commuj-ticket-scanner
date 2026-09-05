@@ -416,25 +416,131 @@ function showResult(type,title,message){
  document.getElementById("result").innerHTML='<div class="result-box '+type+'"><div class="title">'+title+'</div><div>'+message+'</div></div>';
 }
 
-function startScanner(){
- const staff=document.getElementById("staffName").value;
- if(!staff){showResult("warning","⚠️ SELECT STAFF","Choose the staff member before scanning.");return;}
- document.getElementById("result").innerHTML="";
- document.getElementById("reader").style.display="block";
- document.getElementById("startBtn").style.display="none";
- document.getElementById("stopBtn").style.display="block";
- scanner=new Html5Qrcode("reader");
- scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},function(decodedText){
-   document.getElementById("token").value=decodedText;
-   stopScanner();
-   showResult("valid","✅ QR CODE SCANNED",'Token detected: <span class="token">'+escapeHtml(decodedText)+'</span><br><br>Review it, then press <strong>CHECK & CHECK-IN</strong>.');
- },function(){}).then(function(){running=true;}).catch(function(error){
-   document.getElementById("reader").style.display="none";
-   document.getElementById("startBtn").style.display="block";
-   document.getElementById("stopBtn").style.display="none";
-   showResult("invalid","❌ CAMERA ERROR","The camera could not be started. Make sure camera permission is allowed.");
-   console.error(error);
- });
+function startScanner() {
+
+  const sessionData =
+    sessionStorage.getItem(
+      CHECKIN_SESSION_KEY
+    );
+
+  if (!sessionData) {
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Please log in with your Staff ID and PIN before scanning."
+    );
+
+    return;
+  }
+
+  let session;
+
+  try {
+
+    session =
+      JSON.parse(sessionData);
+
+  } catch (error) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
+
+  if (
+    !session ||
+    !session.token
+  ) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
+
+  document.getElementById("result").innerHTML = "";
+
+  document.getElementById("reader").style.display =
+    "block";
+
+  document.getElementById("startBtn").style.display =
+    "none";
+
+  document.getElementById("stopBtn").style.display =
+    "block";
+
+  scanner =
+    new Html5Qrcode("reader");
+
+  scanner.start(
+    { facingMode: "environment" },
+    {
+      fps: 10,
+      qrbox: {
+        width: 250,
+        height: 250
+      }
+    },
+    function(decodedText) {
+
+      document.getElementById("token").value =
+        decodedText;
+
+      stopScanner();
+
+      showResult(
+        "valid",
+        "✅ QR CODE SCANNED",
+        'Token detected: <span class="token">' +
+        escapeHtml(decodedText) +
+        '</span><br><br>Review it, then press <strong>CHECK & CHECK-IN</strong>.'
+      );
+
+    },
+    function() {}
+  )
+  .then(function() {
+
+    running = true;
+
+  })
+  .catch(function(error) {
+
+    document.getElementById("reader").style.display =
+      "none";
+
+    document.getElementById("startBtn").style.display =
+      "block";
+
+    document.getElementById("stopBtn").style.display =
+      "none";
+
+    showResult(
+      "invalid",
+      "❌ CAMERA ERROR",
+      "The camera could not be started. Make sure camera permission is allowed."
+    );
+
+    console.error(error);
+
+  });
+
 }
 
 function stopScanner(){
