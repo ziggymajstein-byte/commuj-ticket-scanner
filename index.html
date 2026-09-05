@@ -48,10 +48,64 @@ button.secondary{background:#666}.or{text-align:center;color:#777;margin:8px 0 1
 <div class="header"><h1>COMMUJ FUNDRAISING DINNER AND AWARDS NIGHT 2026</h1>
 <p>Dinner-Day Ticket Check-In</p></div>
 <div class="card">
-<label for="staffName">Staff</label>
-<select id="staffName">
-  <option value="">Loading staff...</option>
-</select>
+
+<div id="loginSection">
+
+  <label for="staffId">Staff ID</label>
+  <input
+    id="staffId"
+    type="text"
+    placeholder="Enter your Staff ID"
+    autocomplete="username"
+  >
+
+  <label for="staffPin">PIN</label>
+  <input
+    id="staffPin"
+    type="password"
+    placeholder="Enter your 6-digit PIN"
+    inputmode="numeric"
+    maxlength="6"
+    autocomplete="current-password"
+  >
+
+  <button
+    type="button"
+    id="loginButton"
+    onclick="loginCheckInStaff()"
+  >
+    🔐 LOGIN
+  </button>
+
+</div>
+
+<div
+  id="loggedInSection"
+  style="display:none;"
+>
+
+  <div
+    style="
+      padding:12px;
+      margin-bottom:15px;
+      background:#e6f4ea;
+      border:1px solid #34a853;
+      border-radius:8px;
+    "
+  >
+    <strong>✅ CHECK-IN STAFF LOGGED IN</strong><br>
+    <span id="loggedInStaff"></span>
+  </div>
+
+  <button
+    type="button"
+    class="secondary"
+    onclick="logoutCheckInStaff()"
+  >
+    🚪 LOG OUT
+  </button>
+
+</div>
 
 <button type="button" id="startBtn" onclick="startScanner()">📷 SCAN QR CODE</button>
 <div id="reader" style="display:none"></div>
