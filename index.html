@@ -1115,27 +1115,69 @@ function searchLostTicket() {
 
 function confirmLostTicketCheckIn() {
 
-  const holderName =
-    document.getElementById("lostName").value.trim();
+  const sessionData =
+    sessionStorage.getItem(
+      CHECKIN_SESSION_KEY
+    );
 
-  const phone =
-    document.getElementById("lostPhone").value.trim();
-
-  const staff =
-    document.getElementById("staffName").value.trim();
-
-
-  if (!staff) {
+  if (!sessionData) {
 
     showResult(
       "warning",
-      "⚠️ SELECT STAFF",
-      "Choose the staff member first."
+      "🔐 LOGIN REQUIRED",
+      "Please log in with your Staff ID and PIN first."
     );
 
     return;
   }
 
+  let session;
+
+  try {
+
+    session =
+      JSON.parse(sessionData);
+
+  } catch (error) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
+
+  if (
+    !session ||
+    !session.token
+  ) {
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
+
+  const holderName =
+    document
+      .getElementById("lostName")
+      .value
+      .trim();
+
+  const phone =
+    document
+      .getElementById("lostPhone")
+      .value
+      .trim();
 
   if (!holderName || !phone) {
 
@@ -1148,25 +1190,25 @@ function confirmLostTicketCheckIn() {
     return;
   }
 
-
   showResult(
     "warning",
     "⏳ CHECKING IN...",
     "Re-checking the ticket before recording entry."
   );
 
-
   const callbackName =
     "commujLostTicketCheckInCallback_" +
     Date.now();
-
 
   window[callbackName] =
     function(response) {
 
       try {
 
-        if (!response || !response.success) {
+        if (
+          !response ||
+          !response.success
+        ) {
 
           showResult(
             "invalid",
@@ -1182,10 +1224,8 @@ function confirmLostTicketCheckIn() {
           return;
         }
 
-
         const ticket =
           response.ticket;
-
 
         if (!ticket) {
 
@@ -1197,7 +1237,6 @@ function confirmLostTicketCheckIn() {
 
           return;
         }
-
 
         showResult(
           "valid",
@@ -1215,15 +1254,8 @@ function confirmLostTicketCheckIn() {
           escapeHtml(ticket.entryStaff)
         );
 
-
-        /*
-         * Clear the lost-ticket fields after
-         * successful check-in.
-         */
-
         document.getElementById("lostName").value = "";
         document.getElementById("lostPhone").value = "";
-
 
       } finally {
 
@@ -1233,10 +1265,8 @@ function confirmLostTicketCheckIn() {
 
     };
 
-
   const script =
     document.createElement("script");
-
 
   script.src =
     APPS_SCRIPT_URL +
@@ -1245,13 +1275,12 @@ function confirmLostTicketCheckIn() {
     encodeURIComponent(holderName) +
     "&phone=" +
     encodeURIComponent(phone) +
-    "&staff=" +
-    encodeURIComponent(staff) +
+    "&sessionToken=" +
+    encodeURIComponent(session.token) +
     "&callback=" +
     encodeURIComponent(callbackName) +
     "&t=" +
     Date.now();
-
 
   script.onerror =
     function() {
@@ -1265,7 +1294,6 @@ function confirmLostTicketCheckIn() {
       );
 
     };
-
 
   document.body.appendChild(script);
 
