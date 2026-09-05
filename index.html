@@ -559,24 +559,57 @@ function sendToCheckIn() {
 
 function openPatron2CheckIn() {
 
-  const staff =
-    document
-      .getElementById("staffName")
-      .value
-      .trim();
+  const sessionData =
+    sessionStorage.getItem(
+      CHECKIN_SESSION_KEY
+    );
 
-  if (!staff) {
+  if (!sessionData) {
 
     showResult(
       "warning",
-      "⚠️ SELECT STAFF",
-      "Choose the staff member first."
+      "🔐 LOGIN REQUIRED",
+      "Please log in with your Staff ID and PIN first."
     );
 
     return;
-
   }
 
+  let session;
+
+  try {
+
+    session =
+      JSON.parse(sessionData);
+
+  } catch (error) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
+
+  if (
+    !session ||
+    !session.token
+  ) {
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
 
   document.getElementById("result").innerHTML = `
 
@@ -639,13 +672,60 @@ function openPatron2CheckIn() {
 
 }
 
+
 function submitPatron2WithoutQr() {
 
-  const staff =
-    document
-      .getElementById("staffName")
-      .value
-      .trim();
+  const sessionData =
+    sessionStorage.getItem(
+      CHECKIN_SESSION_KEY
+    );
+
+  if (!sessionData) {
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Please log in with your Staff ID and PIN first."
+    );
+
+    return;
+  }
+
+  let session;
+
+  try {
+
+    session =
+      JSON.parse(sessionData);
+
+  } catch (error) {
+
+    sessionStorage.removeItem(
+      CHECKIN_SESSION_KEY
+    );
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
+
+  if (
+    !session ||
+    !session.token
+  ) {
+
+    showResult(
+      "warning",
+      "🔐 LOGIN REQUIRED",
+      "Your login session is invalid. Please log in again."
+    );
+
+    return;
+  }
 
   const arrivalName =
     document
@@ -659,20 +739,6 @@ function submitPatron2WithoutQr() {
       .value
       .trim();
 
-
-  if (!staff) {
-
-    showResult(
-      "warning",
-      "⚠️ SELECT STAFF",
-      "Choose the staff member first."
-    );
-
-    return;
-
-  }
-
-
   if (!arrivalName) {
 
     showResult(
@@ -682,9 +748,7 @@ function submitPatron2WithoutQr() {
     );
 
     return;
-
   }
-
 
   if (!arrivalPhone) {
 
@@ -695,9 +759,7 @@ function submitPatron2WithoutQr() {
     );
 
     return;
-
   }
-
 
   showResult(
     "warning",
@@ -705,11 +767,9 @@ function submitPatron2WithoutQr() {
     "Checking the Double Patron ticket database."
   );
 
-
   const callbackName =
     "commujDoublePatronCallback_" +
     Date.now();
-
 
   window[callbackName] =
     function(response) {
@@ -728,19 +788,19 @@ function submitPatron2WithoutQr() {
           );
 
           return;
-
         }
-
 
         showResult(
           response &&
           response.result === "ALREADY_USED"
             ? "warning"
             : "invalid",
+
           response &&
           response.result === "ALREADY_USED"
             ? "⚠️ ALREADY USED"
             : "❌ VERIFICATION FAILED",
+
           escapeHtml(
             response &&
             response.message
@@ -757,10 +817,8 @@ function submitPatron2WithoutQr() {
 
     };
 
-
   const script =
     document.createElement("script");
-
 
   script.src =
     APPS_SCRIPT_URL +
@@ -769,13 +827,12 @@ function submitPatron2WithoutQr() {
     encodeURIComponent(arrivalName) +
     "&arrivalPhone=" +
     encodeURIComponent(arrivalPhone) +
-    "&staff=" +
-    encodeURIComponent(staff) +
+    "&sessionToken=" +
+    encodeURIComponent(session.token) +
     "&callback=" +
     encodeURIComponent(callbackName) +
     "&t=" +
     Date.now();
-
 
   script.onerror =
     function() {
@@ -789,7 +846,6 @@ function submitPatron2WithoutQr() {
       );
 
     };
-
 
   document
     .body
